@@ -3,13 +3,13 @@ package main
 
 //for database
 type Database struct {
-	dbtype   string
-	username string
-	password string
-	dbname   string
-	host     string
-	port     string
-	charset  string
+	Dbtype   string `yaml: "dbtype"`
+	Username string `yaml: "username"`
+	Password string `yaml: "password"`
+	Dbname   string `yaml: "dbname"`
+	Host     string `yaml: "host"`
+	Port     string `yaml: "port"`
+	Charset  string `yaml: "charset"`
 }
 
 //for table admin

@@ -2,8 +2,14 @@
 package main
 
 type AdminDao interface {
-	querySingleRowById(id string) AdminDao
-	queryRows() AdminDaos
-	isTrue(id string) bool
+	querySingleRowById(id string) (AdminDao, error)
+	queryRows() (AdminDaos, error)
+	isExist(id string) (bool, error)
+	add() (bool, error)
+	deleteById(id string) (bool, error)
 }
 type AdminDaos []AdminDao
+
+type DatabaseDao interface {
+	getConf(dbt *Database) *Database
+}

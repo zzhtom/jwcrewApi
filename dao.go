@@ -29,19 +29,19 @@ func createInstance(database Database) *sql.DB {
 		if db == nil {
 			var err error
 			var buf bytes.Buffer
-			buf.WriteString(database.username)
+			buf.WriteString(database.Username)
 			buf.WriteString(":")
-			buf.WriteString(database.password)
+			buf.WriteString(database.Password)
 			buf.WriteString("@tcp(")
-			buf.WriteString(database.host)
+			buf.WriteString(database.Host)
 			buf.WriteString(":")
-			buf.WriteString(database.port)
+			buf.WriteString(database.Port)
 			buf.WriteString(")/")
-			buf.WriteString(database.dbname)
+			buf.WriteString(database.Dbname)
 			buf.WriteString("?charset=")
-			buf.WriteString(database.charset)
+			buf.WriteString(database.Charset)
 			//	once.Do(func() {})
-			db, err = sql.Open(database.dbtype, buf.String())
+			db, err = sql.Open(database.Dbtype, buf.String())
 			if err != nil {
 				logger.Error(err)
 				return nil
@@ -58,6 +58,6 @@ func createInstance(database Database) *sql.DB {
 }
 func closeDatabase() {
 	if db != nil {
-		defer db.Close()
+		db.Close()
 	}
 }

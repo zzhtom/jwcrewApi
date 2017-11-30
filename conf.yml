@@ -1,0 +1,7 @@
+dbtype: mysql
+username: root
+password: zzhzzhzzh
+dbname: jw_crew
+host: 45.62.101.211    
+port: 3306    
+charset: utf8

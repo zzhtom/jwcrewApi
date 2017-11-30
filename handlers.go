@@ -3,88 +3,106 @@ package main
 import (
 	"encoding/json"
 	_ "fmt"
-	_ "io"
-	_ "io/ioutil"
+	"io"
+	"io/ioutil"
 	"net/http"
 	_ "strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
 
-func AdminList(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+func AdminInfo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Accept", "www.zhangxiaoheng.cn/api/admin+json; version=1.0")
 	var admin Admin
-	data := admin.querySingleRowById(vars["id"])
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		panic(err)
+
+	if strings.Contains(r.Method, "POST") {
+
+		body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+		if err != nil {
+			panic(err)
+		}
+		if err := r.Body.Close(); err != nil {
+			panic(err)
+		}
+		if err := json.Unmarshal(body, &admin); err != nil {
+			w.WriteHeader(422) // unprocessable entity
+			if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 422, Data: nil, Message: err.Error()}); err != nil {
+				panic(err)
+			}
+			return
+		}
+		if rst, _ := admin.isExist(admin.UserName); rst {
+			if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 205, Data: nil, Message: "sql: user have been exist."}); err != nil {
+				panic(err)
+			}
+
+			return
+		}
+		if rst, err := admin.add(); rst {
+			w.WriteHeader(http.StatusCreated)
+			if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 200, Data: nil, Message: ""}); err != nil {
+				panic(err)
+			}
+		} else {
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 204, Data: nil, Message: err.Error()}); err != nil {
+				panic(err)
+			}
+		}
+		return
 	}
+
+	id := mux.Vars(r)["id"]
+
+	w.WriteHeader(http.StatusOK)
+	if rst, err := admin.isExist(id); !rst {
+		if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 404, Data: nil, Message: err.Error()}); err != nil {
+			panic(err)
+		}
+
+		return
+	}
+	if strings.Contains(r.Method, "DELETE") {
+		if rst, err := admin.deleteById(id); err != nil && !rst {
+			if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 204, Data: nil, Message: err.Error()}); err != nil {
+				panic(err)
+			}
+		} else {
+			if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 200, Data: nil, Message: ""}); err != nil {
+				panic(err)
+			}
+		}
+
+		return
+	}
+
+	if data, err := admin.querySingleRowById(id); err != nil {
+		if err := json.NewEncoder(w).Encode(jwcrewApi{Code: http.StatusNoContent, Data: nil, Message: err.Error()}); err != nil {
+			panic(err)
+		}
+	} else {
+		if err := json.NewEncoder(w).Encode(jwcrewApi{Code: http.StatusOK, Data: data, Message: ""}); err != nil {
+			panic(err)
+		}
+	}
+
 }
 
 func AdminsList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Accept", "www.zhangxiaoheng.com/admin+json; version=1.0")
 	w.WriteHeader(http.StatusOK)
 	var admin Admin
-	data := admin.queryRows()
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		panic(err)
-	}
-}
-
-func TodoShow(w http.ResponseWriter, r *http.Request) {
-	//	vars := mux.Vars(r)
-	//	var todoId int
-	//	var err error
-	//	if todoId, err = strconv.Atoi(vars["todoId"]); err != nil {
-	//		panic(err)
-	//	}
-	//	todo := RepoFindTodo(todoId)
-	//	if todo.Id > 0 {
-	//		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//		w.WriteHeader(http.StatusOK)
-	//		if err := json.NewEncoder(w).Encode(todo); err != nil {
-	//			panic(err)
-	//		}
-	//		return
-	//	}
-
-	// If we didn't find it, 404
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusNotFound)
-	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
-		panic(err)
+	if data, err := admin.queryRows(); err != nil {
+		if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 204, Data: nil, Message: err.Error()}); err != nil {
+			panic(err)
+		}
+	} else {
+		if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 200, Data: data, Message: ""}); err != nil {
+			panic(err)
+		}
 	}
 
-}
-
-/*
-Test with this curl command:
-
-curl -H "Content-Type: application/json" -d '{"name":"New Todo"}' http://localhost:8080/todos
-
-*/
-func TodoCreate(w http.ResponseWriter, r *http.Request) {
-	//	var todo Todo
-	//	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	if err := r.Body.Close(); err != nil {
-	//		panic(err)
-	//	}
-	//	if err := json.Unmarshal(body, &todo); err != nil {
-	//		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//		w.WriteHeader(422) // unprocessable entity
-	//		if err := json.NewEncoder(w).Encode(err); err != nil {
-	//			panic(err)
-	//		}
-	//	}
-
-	//	t := RepoCreateTodo(todo)
-	//	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//	w.WriteHeader(http.StatusCreated)
-	//	if err := json.NewEncoder(w).Encode(t); err != nil {
-	//		panic(err)
-	//	}
 }

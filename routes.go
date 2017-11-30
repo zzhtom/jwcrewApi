@@ -16,24 +16,24 @@ var routes = Routes{
 		"admin",
 		"GET",
 		"/api/admin/{id}",
-		AdminList,
+		AdminInfo,
+	},
+	Route{
+		"admin",
+		"POST",
+		"/api/admin",
+		AdminInfo,
+	},
+	Route{
+		"admin",
+		"DELETE",
+		"/api/admin/{id}",
+		AdminInfo,
 	},
 	Route{
 		"AdminList",
 		"GET",
 		"/api/adminlist",
 		AdminsList,
-	},
-	Route{
-		"TodoCreate",
-		"POST",
-		"/todos",
-		TodoCreate,
-	},
-	Route{
-		"TodoShow",
-		"GET",
-		"/todos/{todoId}",
-		TodoShow,
 	},
 }
