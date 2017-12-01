@@ -13,7 +13,7 @@ import (
 )
 
 var lock *sync.Mutex = &sync.Mutex{}
-var logger = logging.MustGetLogger("chjw.api")
+var logger = logging.MustGetLogger("chjw.api.dao")
 
 var format = logging.MustStringFormatter(
 	`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,

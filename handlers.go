@@ -13,8 +13,7 @@ import (
 )
 
 func AdminInfo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Accept", "www.zhangxiaoheng.cn/api/admin+json; version=1.0")
+
 	var admin Admin
 
 	if strings.Contains(r.Method, "POST") {
@@ -91,8 +90,7 @@ func AdminInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminsList(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Accept", "www.zhangxiaoheng.com/admin+json; version=1.0")
+
 	w.WriteHeader(http.StatusOK)
 	var admin Admin
 	if data, err := admin.queryRows(); err != nil {

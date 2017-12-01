@@ -2,8 +2,9 @@
 package main
 
 import (
-	"errors"
+	_ "errors"
 	"io/ioutil"
+	_ "reflect"
 
 	"gopkg.in/yaml.v2"
 )
@@ -24,15 +25,19 @@ func (dbt Database) getConf() Database {
 }
 
 //for admin
-func (admin Admin) queryRows() (AdminDaos, error) {
+func (admin Admin) queryRows() ([]interface{}, error) {
 	sql := "SELECT username,realname,email,telphone,website,sex,age,hobby,province,city,town,birthday,introduction FROM think_admin"
+	slice := []interface{}{&admin.UserName, &admin.RealName, &admin.Email, &admin.Telephone, &admin.Website, &admin.Sex, &admin.Age, &admin.Hobby,
+		&admin.Province, &admin.City, &admin.Town, &admin.Birthday, &admin.Introduction}
 
-	return find(sql, admin)
+	return find(sql, &admin, slice)
 }
 func (admin Admin) querySingleRowById(id string) (AdminDao, error) {
 	sql := "SELECT username,realname,email,telphone,website,sex,age,hobby,province,city,town,birthday,introduction FROM think_admin where username = ?"
-
-	return findOne(sql, id, admin)
+	slice := []interface{}{&admin.UserName, &admin.RealName, &admin.Email, &admin.Telephone, &admin.Website, &admin.Sex, &admin.Age, &admin.Hobby,
+		&admin.Province, &admin.City, &admin.Town, &admin.Birthday, &admin.Introduction}
+	err := findOne(sql, id, slice)
+	return admin, err
 }
 
 func (admin Admin) isExist(id string) (bool, error) {
@@ -110,48 +115,43 @@ func exist(sql string, id string) (bool, error) {
 	return true, nil
 }
 
-func findOne(sql string, id string, data interface{}) (AdminDao, error) {
-	slice := make([]interface{}, 1)
-	switch data.(type) {
-	case Admin:
-		admin := data.(Admin)
-		err := db.QueryRow(sql, id).Scan(&admin.UserName, &admin.RealName, &admin.Email, &admin.Telephone, &admin.Website, &admin.Sex, &admin.Age, &admin.Hobby,
-			&admin.Province, &admin.City, &admin.Town, &admin.Birthday, &admin.Introduction)
-		if err != nil {
-			logger.Error(err)
-			return nil, err
-		}
-		return admin, nil
+func findOne(sql string, id string, slice []interface{}) error {
+
+	err := db.QueryRow(sql, id).Scan(slice...)
+	if err != nil {
+		logger.Error(err)
+		return err
 	}
 
-	return nil, errors.New("findOne: data type is undefine")
+	return err
 }
 
-func find(sql string, data interface{}) (AdminDaos, error) {
-	var admins AdminDaos
+func find(sql string, admin interface{}, slice []interface{}) ([]interface{}, error) {
+	var datas []interface{}
 	rows, err := db.Query(sql)
 	if err != nil {
 		logger.Error(err)
 		return nil, err
 	}
 	defer rows.Close()
-	switch data.(type) {
-	case Admin:
-		admin := data.(Admin)
-		for rows.Next() {
-			err := rows.Scan(&admin.UserName, &admin.RealName, &admin.Email, &admin.Telephone, &admin.Website, &admin.Sex, &admin.Age, &admin.Hobby,
-				&admin.Province, &admin.City, &admin.Town, &admin.Birthday, &admin.Introduction)
-			if err != nil {
-				logger.Error(err)
-				return nil, err
-			}
-			admins = append(admins, admin)
+	//	switch data.(type) {
+	//	case Admin:
+	//		admin := data.(Admin)
+	//		slice := []interface{}{&admin.UserName, &admin.RealName, &admin.Email, &admin.Telephone, &admin.Website, &admin.Sex, &admin.Age, &admin.Hobby,
+	//			&admin.Province, &admin.City, &admin.Town, &admin.Birthday, &admin.Introduction}
+	for rows.Next() {
+		err := rows.Scan(slice...)
+		if err != nil {
+			logger.Error(err)
+			return nil, err
 		}
+		datas = append(datas, admin)
 	}
+	//	}
 	err = rows.Err()
 	if err != nil {
 		logger.Error(err)
 		return nil, err
 	}
-	return admins, nil
+	return datas, nil
 }
