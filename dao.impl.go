@@ -5,6 +5,7 @@ import (
 	_ "errors"
 	"io/ioutil"
 	_ "reflect"
+	_ "unsafe"
 
 	"gopkg.in/yaml.v2"
 )
@@ -32,7 +33,7 @@ func (admin Admin) queryRows() ([]interface{}, error) {
 
 	return find(sql, &admin, slice)
 }
-func (admin Admin) querySingleRowById(id string) (AdminDao, error) {
+func (admin Admin) querySingleRowById(id string) (Dao, error) {
 	sql := "SELECT username,realname,email,telphone,website,sex,age,hobby,province,city,town,birthday,introduction FROM think_admin where username = ?"
 	slice := []interface{}{&admin.UserName, &admin.RealName, &admin.Email, &admin.Telephone, &admin.Website, &admin.Sex, &admin.Age, &admin.Hobby,
 		&admin.Province, &admin.City, &admin.Town, &admin.Birthday, &admin.Introduction}
@@ -48,14 +49,14 @@ func (admin Admin) isExist(id string) (bool, error) {
 
 func (admin Admin) add() (bool, error) {
 	sql := "INSERT INTO think_admin (username, realname, email, telphone, website, sex, age, hobby, province, city, town, birthday, introduction) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
-
-	return tran(sql, admin)
+	slice := []interface{}{admin.UserName, admin.RealName, admin.Email, admin.Telephone, admin.Website, admin.Sex, admin.Age, admin.Hobby, admin.Province, admin.City, admin.Town, admin.Birthday, admin.Introduction}
+	return tran(sql, nil, slice)
 }
 
 func (admin Admin) deleteById(id string) (bool, error) {
 	sql := "delete from think_admin where username = ?"
 
-	return tran(sql, id)
+	return tran(sql, id, nil)
 }
 
 /**
@@ -64,7 +65,7 @@ func (admin Admin) deleteById(id string) (bool, error) {
 * description:share function
  */
 
-func tran(sql string, data interface{}) (bool, error) {
+func tran(sql string, data interface{}, slice []interface{}) (bool, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		logger.Error(err)
@@ -85,9 +86,14 @@ func tran(sql string, data interface{}) (bool, error) {
 			logger.Error(err)
 			return false, err
 		}
-	case Admin:
-		admin := data.(Admin)
-		_, err = stmt.Exec(admin.UserName, admin.RealName, admin.Email, admin.Telephone, admin.Website, admin.Sex, admin.Age, admin.Hobby, admin.Province, admin.City, admin.Town, admin.Birthday, admin.Introduction)
+	case int:
+		_, err = stmt.Exec(data)
+		if err != nil {
+			logger.Error(err)
+			return false, err
+		}
+	default:
+		_, err = stmt.Exec(slice...)
 		if err != nil {
 			logger.Error(err)
 			return false, err
@@ -134,20 +140,16 @@ func find(sql string, admin interface{}, slice []interface{}) ([]interface{}, er
 		return nil, err
 	}
 	defer rows.Close()
-	//	switch data.(type) {
-	//	case Admin:
-	//		admin := data.(Admin)
-	//		slice := []interface{}{&admin.UserName, &admin.RealName, &admin.Email, &admin.Telephone, &admin.Website, &admin.Sex, &admin.Age, &admin.Hobby,
-	//			&admin.Province, &admin.City, &admin.Town, &admin.Birthday, &admin.Introduction}
 	for rows.Next() {
 		err := rows.Scan(slice...)
 		if err != nil {
 			logger.Error(err)
 			return nil, err
 		}
-		datas = append(datas, admin)
+		temp := ObjectToObejct(admin)
+		datas = append(datas, temp)
 	}
-	//	}
+
 	err = rows.Err()
 	if err != nil {
 		logger.Error(err)
