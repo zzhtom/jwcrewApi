@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	_ "fmt"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -25,13 +25,17 @@ func AdminInfo(w http.ResponseWriter, r *http.Request) {
 		if err := r.Body.Close(); err != nil {
 			panic(err)
 		}
-		if err := json.Unmarshal(body, &admin); err != nil {
+		if err := json.Unmarshal(body, &admin); err != nil || strings.EqualFold("", admin.UserName) {
 			w.WriteHeader(422) // unprocessable entity
+			if err == nil {
+				err = errors.New("username isn't null")
+			}
 			if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 422, Data: nil, Message: err.Error()}); err != nil {
 				panic(err)
 			}
 			return
 		}
+
 		if rst, _ := admin.isExist(admin.UserName); rst {
 			if err := json.NewEncoder(w).Encode(jwcrewApi{Code: 205, Data: nil, Message: "sql: user have been exist."}); err != nil {
 				panic(err)

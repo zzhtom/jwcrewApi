@@ -50,22 +50,35 @@ func (admin Admin) isExist(id string) (bool, error) {
 func (admin Admin) add() (bool, error) {
 	sql := "INSERT INTO think_admin (username, realname, email, telphone, website, sex, age, hobby, province, city, town, birthday, introduction) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
 	slice := []interface{}{admin.UserName, admin.RealName, admin.Email, admin.Telephone, admin.Website, admin.Sex, admin.Age, admin.Hobby, admin.Province, admin.City, admin.Town, admin.Birthday, admin.Introduction}
-	return tran(sql, nil, slice)
+	return tran(sql, slice)
 }
 
 func (admin Admin) deleteById(id string) (bool, error) {
 	sql := "delete from think_admin where username = ?"
-
-	return tran(sql, id, nil)
+	slice := []interface{}{id}
+	return tran(sql, slice)
 }
 
+func (admin Admin) update() (bool, error) {
+	sql := "update think_admin set realname = ?, set email= ?, set telphone = ?, set website = ?, set sex = ?, set age = ?, set hobby = ?, set province = ?, set city = ?, set town = ?, set birthday = ?, set introduction = ? where username = ?"
+	slice := []interface{}{admin.RealName, admin.Email, admin.Telephone, admin.Website, admin.Sex, admin.Age, admin.Hobby, admin.Province, admin.City, admin.Town, admin.Birthday, admin.Introduction, admin.UserName}
+	return tran(sql, slice)
+}
+/**
+* from: zhangxioaheng
+* data: 2017-12-08
+* description:create sql
+ */
+func createSQL(admin Admin) (string, []interface{}){
+	
+}
 /**
 * from: zhangxioaheng
 * data: 2017-11-30
 * description:share function
  */
 
-func tran(sql string, data interface{}, slice []interface{}) (bool, error) {
+func tran(sql string, slice []interface{}) (bool, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		logger.Error(err)
@@ -79,26 +92,11 @@ func tran(sql string, data interface{}, slice []interface{}) (bool, error) {
 		return false, err
 	}
 	defer stmt.Close() // danger!
-	switch data.(type) {
-	case string:
-		_, err = stmt.Exec(data)
-		if err != nil {
-			logger.Error(err)
-			return false, err
-		}
-	case int:
-		_, err = stmt.Exec(data)
-		if err != nil {
-			logger.Error(err)
-			return false, err
-		}
-	default:
-		_, err = stmt.Exec(slice...)
-		if err != nil {
-			logger.Error(err)
-			return false, err
-		}
 
+	_, err = stmt.Exec(slice...)
+	if err != nil {
+		logger.Error(err)
+		return false, err
 	}
 
 	err = tx.Commit()

@@ -2,11 +2,12 @@
 package main
 
 type Dao interface {
-	querySingleRowById(id string) (Dao, error)
-	queryRows() ([]interface{}, error)
-	isExist(id string) (bool, error)
 	add() (bool, error)
+	update() (bool, error)
+	isExist(id string) (bool, error)
+	queryRows() ([]interface{}, error)
 	deleteById(id string) (bool, error)
+	querySingleRowById(id string) (Dao, error)
 }
 type Daos []Dao
 
